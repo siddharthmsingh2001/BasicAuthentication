@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Registration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <style>
+        .tab-content {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            margin-right: 10px;
+        }
+        .registration-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+<script>
+    function togglePassword(fieldId, button) {
+        const passwordInput = document.getElementById(fieldId);
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            button.textContent = "Hide";
+        } else {
+            passwordInput.type = "password";
+            button.textContent = "Show";
+        }
+    }
+
+    function showMessage(id) {
+        const msgEl = document.getElementById(id);
+        if (msgEl && msgEl.textContent.trim() !== "") {
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.opacity = '0'; // smooth fade-out
+                setTimeout(() => msgEl.style.display = 'none', 1000);
+            }, 10000); // visible for 10 seconds
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        showMessage('message');
+        showMessage('error-message');
+    });
+
+</script>
+<body>
+<div class="container registration-container">
+    <div class="w-50">
+        <h2 class="text-center">Registration</h2>
+        <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">Admin Registration</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user" type="button" role="tab">User Registration</button>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="admin" role="tabpanel">
+                <h3>Admin Registration</h3>
+                <form th:action="@{/register-admin}" th:object="${adminRegistrationRequest}" method="post">
+                    <div class="form-group">
+                        <label for="adminAccountName">Name</label>
+                        <input type="text" class="form-control" id="adminAccountName" th:field="*{accountName}" placeholder="Enter name">
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountName')}" th:errors="*{accountName}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminAccountEmail">Email</label>
+                        <input type="email" class="form-control" id="adminAccountEmail" th:field="*{accountEmail}" placeholder="Enter email">
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountEmail')}" th:errors="*{accountEmail}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminAccountPassword">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="adminAccountPassword" th:field="*{accountPassword}" placeholder="Enter password">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('adminAccountPassword', this)">Show</button>
+                        </div>
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountPassword')}" th:errors="*{accountPassword}"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="user" role="tabpanel">
+                <h3>User Registration</h3>
+                <form th:action="@{/register-user}" th:object="${userRegistrationRequest}" method="post">
+                    <div class="form-group">
+                        <label for="userAccountName">Name</label>
+                        <input type="text" class="form-control" id="userAccountName" th:field="*{accountName}" placeholder="Enter name">
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountName')}" th:errors="*{accountName}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userAccountEmail">Personal Email</label>
+                        <input type="email" class="form-control" id="userAccountEmail" th:field="*{accountEmail}" placeholder="Enter personal email">
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountEmail')}" th:errors="*{accountEmail}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userAdminEmail">Admin Email</label>
+                        <input type="email" class="form-control" id="userAdminEmail" th:field="*{adminEmail}" placeholder="Enter admin email">
+                        <div class="text-danger" th:if="${#fields.hasErrors('adminEmail')}" th:errors="*{adminEmail}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userAccountPassword">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="userAccountPassword" th:field="*{accountPassword}" placeholder="Enter password">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('userAccountPassword', this)">Show</button>
+                        </div>
+                        <div class="text-danger" th:if="${#fields.hasErrors('accountPassword')}" th:errors="*{accountPassword}"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </form>
+            </div>
+        </div>
+        <!--    Regular message comes here    -->
+        <p id="message" th:if="${message}" th:text="${message}"
+           class="text-success position-fixed p-2 bg-light border rounded"
+           style="bottom: 60px; left: 20px; z-index: 1050; display: none; opacity: 1; transition: opacity 1s ease;">
+        </p>
+        <!--    Error message comes here    -->
+        <p id="error-message" th:if="${errorMessage}" th:text="${errorMessage}"
+           class="text-danger position-fixed p-2 bg-light border border-danger rounded"
+           style="bottom: 60px; left: 20px; z-index: 1050; display: none; opacity: 1; transition: opacity 1s ease;">
+        </p>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

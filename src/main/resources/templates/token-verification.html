@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang=<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Token Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .token-container {
+            max-width: 400px;
+            margin: 5% auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        .token-input {
+            text-align: center;
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="token-container text-center">
+    <h3>Token Verification</h3>
+    <p>Enter the 6-digit Token sent to your email.</p>
+
+    <form th:action="@{/verify-token}" th:object="${verificationToken}" method="post">
+        <input type="hidden" name="accountName" th:value="${accountName}"/>
+
+        <div class="mb-3">
+            <input type="text" minlength="6" maxlength="6" class="form-control token-input" th:field="${verificationToken.token}" placeholder="Enter Token" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Verify</button>
+    </form>
+    <p id="error-message" th:if="${errorMessage}" th:text="${errorMessage}"
+       class="text-danger position-fixed p-2 bg-light border border-danger rounded"
+       style="bottom: 60px; left: 20px; z-index: 1050; display: none; opacity: 1; transition: opacity 1s ease;">
+    </p>
+</div>
+
+<script>
+    function showMessage(id) {
+        const msgEl = document.getElementById(id);
+        if (msgEl && msgEl.textContent.trim() !== "") {
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.opacity = '0'; // smooth fade-out
+                setTimeout(() => msgEl.style.display = 'none', 1000);
+            }, 10000); // visible for 5 seconds
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        showMessage('error-message');
+    });
+</script>
+</body>
+</html>

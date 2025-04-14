@@ -1,0 +1,120 @@
+In the DisabledExceptionHandler we see the following code:
+HttpSession session = request.getSession();
+        session.setAttribute("accountName", account.getAccountName());
+        session.setAttribute("errorMessage", exception.getMessage());
+        response.sendRedirect("/verify-token");
+
+Understanding Session really:
+Following are the words we often might here when it comes to Session: SessionStatus | HttpSession | @SessionAttribute | @SessionAttributes
+A Session is simply a Cookie but instead of setting values directly in the cookie what we do is we set the data in the server in a database or memory and return the id of that entry in the form of cookie called JSESSIONID
+Now We can set up data into Sessions in three major ways
+Conversational OR Global OR Flash.
+Conversational:
+We set it up using @SessionAttributes above the Controller and pass all the values that will be stored in the session
+Following is a dummy code:
+@Controller
+@RequestMapping("/")
+@RequiredArgsConstructor
+@SessionAttributes({"accountName","errorMessage"})
+public class AuthenticationController {
+    @GetMapping("test")
+    public String test(Model model){
+        // the model here will automatically have the values for accountName and errorMessage if they were set in any of the other handler methods "within the same controller" This is why it's called conversational conversation within the same controller
+
+        To clear the session we use SessionStatus.setComplete();
+    }
+}
+Spring recommends not to use the above methods if we want to store the value in a session that is to be used across multiple controllers. We can still access these values across different Controllers with the help of @SessionAttribute Key key, however it is not recommended
+GLOBAL
+If we want to set up some value that will be global across the controllers say the accountId then we can do it simply with
+@Controller
+@RequestMapping("/")
+@RequiredArgsConstructor
+public class AuthenticationController {
+    @GetMapping("test")
+    public String test(Model model, HttpSession session){
+        // To add a key:value to the Session globally we do session.setAttribute("key":"value)
+        This value can now be retrieved with the help of session.getAttribute("address"). Unlike Conversational the session values are not automatically inject in the model we need to set them manually
+
+        To clear the session we use session.invalidate();
+    }
+}
+FLASH
+If we want to setup some value that only needs to exist for the next REQUEST than we can set the value in a "FLASH" way
+WE often do this in the controller when we do RedirectAttributes.addFlashAttributes(...)
+addFlashAttribute temporarily stores an attribute in the session to be available on the next request, but only for that next request. The next request is often a redirect:/"endpoint"
+It’s NOT passed via URL (like ?accountName=...), and NOT available as a @RequestParam.
+It is NOT a request attribute either; it's available through @ModelAttribute in the next request, even though it’s a new request (thanks to Spring's flash map mechanism).
+NOTE in Spring there are multiple places where we can add the RedirectAttributes to the method signature in such cases we need to do the following:
+FlashMap map = new FlashMap; // A short-lived map that persists for just one redirect request
+map.put("message","..") // Add the attribute
+new SessionFlashMapManager().saveOutputFlashMap(map,request,response); // This manager takes the flash map and stores it temporarily in the session. Next time the browser hits /endpoint, the flash map is automatically extracted and added to the model.
+redirectStrategy().sendRedirect(request, response, "/login");
+https://www.baeldung.com/spring-web-flash-attributes An article on Flashing Attributes in Session
+
+
+=======================================================================================================================
+
+Understanding why Attributes instead of Parameters:
+Request parameters(request.getParameter(...)) are a part of the current request and are only available in that request.
+A redirect(response.sendRedirect(...)) tells the browser to visit a new 'URL' which creates a new request. In such case the only options to pass the data are:
+-> Append the query parameters in the url as (?name=xyz){unsafe exposes content in url}
+-> Use Session:
+    Scenario:
+        As you hit a URL("localhost:8080") and don't have any session in cookies
+        Spring Session will  HttpSessionRequestCache : Saved request http://localhost:8080/?continue to session
+        Thus you can use this session to store data which allows us to store data across multiple request
+
+=======================================================================================================================
+
+Understanding forward and redirect:
+Redirects:
+It sends a new HTTP Request from the browser meaning the URL changes, and we loose the request attributes unless stored in session.
+Forwards:
+Happens internally server-side. The URL in the browser stays the same. Used when we want to dispatch a request within the same request cycle.
+
+=======================================================================================================================
+
+Understanding why response and not request:
+Since we are redirecting the client to a new URL it should be a response and we setRedirect("..."). we redirect because:
+Authentication is already complete
+The new page is logically separate from the login page It’s safe to reload (no duplicate POSTs) Good for PRG pattern (Post-Redirect-Get).
+
+=======================================================================================================================
+
+Understanding @RequestParam and @RequestAttribute and @ModelAttribute
+@RequestParam:
+This is used to bind a form field or query string to a controller parameter.
+e.g:
+<input name="username" type="text"/> OR http://localhost:8080/verify-token?accountName=JohnDoe
+The controller then accepts these parameters and can be used in its scope.
+@RequestAttribute
+This is used when one controller or filter sets something in the request using request.setAttribute and "forwards" the same request to another handler. It is not exposed to the user thus is also a safe way to save and retrieve data.
+e.g.:
+request.setAttribute("accountName", "JohnDoe"); // Say in a filter we added the attribute
+request.getRequestDispatcher("/next").forward(request, response); // We use that attribute in a controller endpoint /next
+@ModelAttribute
+Has two main major uses as:
+Binding a form to an object (often used in @PostMapping)
+Injecting a flash/session/model attribute into a method argument.
+
+=======================================================================================================================
+
+Understanding Redirect and few of its types:
+A redirect is when the server tells the browser "Go make a new GET request to this /endpoint"
+It sends a 302 Fount or sometimes other 30x response
+This ends the current request and starts a new one
+Any request-scoped attributes are gone unless stored in URL parms or FlashMap
+In Spring there are multiple ways to send redirect based on where in the application we are.
+1) response.sendRedirect("/endpoint")
+A low level redirect from the Servlet-API not Spring specific. We use it outside of Spring MVC like A filter, Handlers etc.
+2) redirectStrategy.sendRedirect(request,response,"/endpoint")
+Springs abstraction over response.sendRedirect("/endpoint").
+3) new RedirectView("endpoint", true).render("...")
+Spring MVC View that renders a redirect which is used internally by return "redirect/endpoint" in controller method
+A short memory hook:
+If you’re in a controller, use "redirect:/...".
+If you’re in a Spring Security handler, use redirectStrategy.sendRedirect(...).
+If you’re outside Spring (filters), use response.sendRedirect(...).
+
+=======================================================================================================================
