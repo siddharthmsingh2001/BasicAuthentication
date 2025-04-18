@@ -65,5 +65,4 @@ public class AuthenticationService {
         accountToken.setTokenValidatedAt(LocalDateTime.now());
         tokenService.save(accountToken);
     }
-
 }
